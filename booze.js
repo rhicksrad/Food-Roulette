@@ -9,8 +9,10 @@ const LAFAYETTE_CENTER = { lat: 40.4167, lon: -86.8753 };
 const RADIUS_METERS = 12000; // ensure West Lafayette coverage as well
 const OVERPASS_URLS = [
 	"https://overpass-api.de/api/interpreter",
+	"https://z.overpass-api.de/api/interpreter",
 	"https://overpass.kumi.systems/api/interpreter",
-	"https://overpass.openstreetmap.ru/api/interpreter"
+	"https://overpass.openstreetmap.ru/api/interpreter",
+	"https://overpass.osm.ch/api/interpreter"
 ];
 
 // DOM
@@ -110,21 +112,56 @@ function buildQuery() {
 	out center;`;
 }
 
+function buildBarsOnlyQuery() {
+	return `[
+		out:json][timeout:25];
+	(
+		node["amenity"~"bar|pub|biergarten|nightclub"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		way["amenity"~"bar|pub|biergarten|nightclub"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		relation["amenity"~"bar|pub|biergarten|nightclub"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+	);
+	out center;`;
+}
+
 async function fetchOverpass() {
 	statusMessage.textContent = "Fetching alcohol venues from OpenStreetMap…";
-	const body = new URLSearchParams({ data: buildQuery() }).toString();
-	const headers = { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" };
-	let json = null, lastErr = null;
-	for (const url of OVERPASS_URLS) {
+	const headers = { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "Accept": "application/json" };
+	const endpoints = [...OVERPASS_URLS].sort(() => Math.random() - 0.5);
+	let lastErr = null;
+	// First attempt: broad query
+	for (let i = 0; i < endpoints.length; i++) {
+		const url = endpoints[i];
 		try {
+			const body = new URLSearchParams({ data: buildQuery() }).toString();
 			const res = await fetch(url, { method: "POST", headers, body });
 			if (!res.ok) throw new Error(`Overpass error ${res.status} @ ${url}`);
-			json = await res.json();
-			break;
-		} catch (e) { lastErr = e; }
+			const json = await res.json();
+			if (json && Array.isArray(json.elements) && json.elements.length > 0) {
+				return json.elements;
+			}
+		} catch (e) {
+			lastErr = e;
+		}
+		// backoff before next endpoint
+		await new Promise(r => setTimeout(r, 500 + i * 300));
 	}
-	if (!json) throw lastErr || new Error("Overpass failed");
-	return json.elements || [];
+	// Fallback: bars-only query
+	for (let i = 0; i < endpoints.length; i++) {
+		const url = endpoints[i];
+		try {
+			const body = new URLSearchParams({ data: buildBarsOnlyQuery() }).toString();
+			const res = await fetch(url, { method: "POST", headers, body });
+			if (!res.ok) throw new Error(`Overpass error ${res.status} @ ${url}`);
+			const json = await res.json();
+			if (json && Array.isArray(json.elements) && json.elements.length > 0) {
+				return json.elements;
+			}
+		} catch (e) {
+			lastErr = e;
+		}
+		await new Promise(r => setTimeout(r, 500 + i * 300));
+	}
+	throw lastErr || new Error("Overpass returned no elements");
 }
 
 async function loadPlaces() {
