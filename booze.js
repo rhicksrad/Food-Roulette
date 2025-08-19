@@ -77,33 +77,9 @@ function buildQuery() {
 	return `[
 		out:json][timeout:25];
 	(
-		node["amenity"~"bar|pub|biergarten|nightclub"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		way["amenity"~"bar|pub|biergarten|nightclub"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		relation["amenity"~"bar|pub|biergarten|nightclub"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-
-		node["amenity"~"restaurant|cafe"]["alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		way["amenity"~"restaurant|cafe"]["alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		relation["amenity"~"restaurant|cafe"]["alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-
-		node["amenity"~"restaurant|cafe"]["serves:alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		way["amenity"~"restaurant|cafe"]["serves:alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		relation["amenity"~"restaurant|cafe"]["serves:alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-
-		node["amenity"~"restaurant|cafe"]["drink:beer"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		way["amenity"~"restaurant|cafe"]["drink:beer"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		relation["amenity"~"restaurant|cafe"]["drink:beer"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-
-		node["amenity"~"restaurant|cafe"]["drink:wine"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		way["amenity"~"restaurant|cafe"]["drink:wine"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		relation["amenity"~"restaurant|cafe"]["drink:wine"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-
-		node["amenity"~"restaurant|cafe"]["drink:spirits"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		way["amenity"~"restaurant|cafe"]["drink:spirits"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		relation["amenity"~"restaurant|cafe"]["drink:spirits"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-
-		node["amenity"~"restaurant|cafe"]["drink:cocktails"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		way["amenity"~"restaurant|cafe"]["drink:cocktails"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		relation["amenity"~"restaurant|cafe"]["drink:cocktails"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		node["amenity"~"bar|pub|biergarten|nightclub|restaurant|cafe"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		way["amenity"~"bar|pub|biergarten|nightclub|restaurant|cafe"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		relation["amenity"~"bar|pub|biergarten|nightclub|restaurant|cafe"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
 
 		node["craft"="brewery"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
 		way["craft"="brewery"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
@@ -171,8 +147,7 @@ async function loadPlaces() {
 		const center = el.center || { lat: undefined, lon: undefined };
 		return { id: el.id, type: el.type, lat: center.lat, lon: center.lon, tags: el.tags || {} };
 	});
-	const all = nodes.map(toPlace)
-		.filter(p => p.types.length > 0);
+	const all = nodes.map(toPlace);
 	// Dedupe by id
 	const seen = new Set();
 	const deduped = [];
@@ -183,6 +158,13 @@ async function loadPlaces() {
 function buildTypesList() {
 	const s = new Set();
 	for (const p of allPlaces) for (const t of p.types) s.add(t);
+	if (s.size === 0) {
+		for (const p of allPlaces) {
+			const a = p.tags && p.tags.amenity;
+			if (["bar","pub","biergarten","nightclub"].includes(a)) s.add(a);
+			if (p.tags && (p.tags.craft === "brewery" || String(p.tags.brewery || p.tags.microbrewery || "").toLowerCase() === "yes")) s.add("brewery");
+		}
+	}
 	uniqueTypes = Array.from(s).sort((a,b)=>a.localeCompare(b));
 }
 
@@ -198,7 +180,14 @@ function updateTypeOptions() {
 
 function applyFilters() {
 	const allowed = new Set(uniqueTypes.filter(t => !excludedTypes.has(t)));
-	currentFiltered = allPlaces.filter(p => p.types.some(t => allowed.has(t)));
+	if (uniqueTypes.length === 0) {
+		currentFiltered = allPlaces.filter(p => {
+			const a = p.tags && p.tags.amenity;
+			return ["bar","pub","biergarten","nightclub"].includes(a) || (p.tags && (p.tags.craft === "brewery" || String(p.tags.brewery || p.tags.microbrewery || "").toLowerCase() === "yes"));
+		});
+	} else {
+		currentFiltered = allPlaces.filter(p => p.types.some(t => allowed.has(t)));
+	}
 	buildWheel(currentFiltered);
 	statusMessage.textContent = `${currentFiltered.length} places ready. Click SPIN!`;
 	spinBtn.disabled = currentFiltered.length === 0;
