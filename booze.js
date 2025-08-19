@@ -59,17 +59,28 @@ function toPlace(el) {
 function collectTypes(tags) {
 	const t = [];
 	const amenity = tags.amenity;
+	const nameLower = String(tags.name || "").toLowerCase();
+
+	// Direct nightlife venues
 	if (amenity === "bar" || amenity === "pub" || amenity === "biergarten" || amenity === "nightclub") t.push(amenity);
-	// Restaurants/cafes that indicate alcohol explicitly
+
+	// Heuristics for restaurants/cafes that serve alcohol
 	const alcoholYes = String(tags.alcohol || tags["serves:alcohol"] || "").toLowerCase() === "yes";
 	const drinkYes = ["drink:beer","drink:wine","drink:spirits","drink:cocktails","drink:liquor"].some(k => String(tags[k] || "").toLowerCase() === "yes");
-	if ((amenity === "restaurant" || amenity === "cafe") && (alcoholYes || drinkYes)) {
+	const nameSuggestsAlcohol = /(\bbar\b|\bpub\b|tap|brew|ale|lager|ipa\b|wine|spirits|cocktail|whiskey|tavern|saloon|lounge|distill|cider|mead)/i.test(nameLower);
+	if ((amenity === "restaurant" || amenity === "cafe") && (alcoholYes || drinkYes || nameSuggestsAlcohol)) {
 		t.push(amenity);
 	}
-	// Breweries / taprooms: craft=brewery, brewery=yes, microbrewery=yes, craft_beer=yes (loose)
-	if ((tags.craft && String(tags.craft).toLowerCase() === "brewery") || String(tags.brewery || tags.microbrewery || tags.craft_beer || "").toLowerCase() === "yes") {
+
+	// Breweries / taprooms
+	const craft = String(tags.craft || "").toLowerCase();
+	const breweryYes = String(tags.brewery || tags.microbrewery || tags.craft_beer || "").toLowerCase() === "yes";
+	const taproomYes = String(tags.taproom || tags["tap_room"] || "").toLowerCase() === "yes";
+	const brewpub = String(tags["brewery:type"] || tags["brewery"] || "").toLowerCase().includes("brewpub");
+	if (craft === "brewery" || breweryYes || taproomYes || brewpub || /tap ?room|brewery|brewing/.test(nameLower)) {
 		t.push("brewery");
 	}
+
 	return Array.from(new Set(t));
 }
 
