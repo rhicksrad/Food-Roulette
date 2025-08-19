@@ -3,15 +3,27 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Food Roulette — Lafayette, IN</title>
+	<title>Food Roulette</title>
 	<link rel="preconnect" href="https://overpass-api.de" />
 	<link rel="stylesheet" href="./styles.css" />
 	<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%236c9dff'/%3E%3Ctext x='32' y='40' font-size='28' text-anchor='middle' fill='%230b0f1a' font-family='Arial' font-weight='700'%3EFR%3C/text%3E%3C/svg%3E" />
 </head>
 <body>
 	<header class="app-header">
-		<h1>Food Roulette — Lafayette, IN</h1>
+		<h1 id="pageTitle">Food Roulette — Select a US city</h1>
 		<div class="controls" style="margin-top:6px">
+			<div class="control-group">
+				<label class="control-label">City</label>
+				<div id="cityDropdown" class="dropdown">
+					<button id="cityToggle" class="dropdown-toggle" aria-expanded="false">Select city</button>
+					<div id="cityMenu" class="dropdown-menu" aria-hidden="true">
+						<div class="dropdown-search">
+							<input id="citySearch" type="text" placeholder="Search US cities..." />
+						</div>
+						<div id="cityResults" class="dropdown-options"></div>
+					</div>
+				</div>
+			</div>
 			<div class="control-group">
 				<a href="./booze.html" class="dropdown-toggle" style="text-decoration:none">Go to Booze Roulette →</a>
 			</div>
@@ -53,7 +65,7 @@
 
 	<main class="app-main">
 		<section class="status-bar">
-			<div id="statusMessage">Loading restaurants from OpenStreetMap…</div>
+			<div id="statusMessage">Select a city to start.</div>
 		</section>
 		<section class="wheel-section">
 			<div class="wheel-wrap">
