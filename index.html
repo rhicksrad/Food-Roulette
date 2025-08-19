@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Food Roulette — Lafayette, IN</title>
+	<link rel="preconnect" href="https://overpass-api.de" />
+	<link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+	<header class="app-header">
+		<h1>Food Roulette — Lafayette, IN</h1>
+		<div class="controls">
+			<div class="control-group">
+				<label class="control-label">Exclude cuisines</label>
+				<div id="cuisineDropdown" class="dropdown">
+					<button id="cuisineToggle" class="dropdown-toggle" aria-expanded="false">Select cuisines to exclude</button>
+					<div id="cuisineMenu" class="dropdown-menu" aria-hidden="true">
+						<div class="dropdown-search">
+							<input id="cuisineSearch" type="text" placeholder="Search cuisines..." />
+						</div>
+						<div id="cuisineOptions" class="dropdown-options"></div>
+						<div class="dropdown-actions">
+							<button id="selectNone" class="secondary">Clear</button>
+							<button id="selectAll" class="secondary">Select all</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="control-group tight">
+				<label class="control-checkbox">
+					<input type="checkbox" id="includeFastFood" checked />
+					<span>Include fast food</span>
+				</label>
+			</div>
+			<div class="control-group tight">
+				<label class="control-checkbox">
+					<input type="checkbox" id="includeCafe" checked />
+					<span>Include cafes</span>
+				</label>
+			</div>
+			<div class="control-group">
+				<button id="reloadBtn" title="Refetch from OpenStreetMap">Reload data</button>
+			</div>
+		</div>
+	</header>
+
+	<main class="app-main">
+		<section class="status-bar">
+			<div id="statusMessage">Loading restaurants from OpenStreetMap…</div>
+		</section>
+		<section class="wheel-section">
+			<div class="wheel-wrap">
+				<svg id="wheelSvg" viewBox="-550 -550 1100 1100" width="100%" height="100%" role="img" aria-label="Spinning wheel of restaurants">
+					<defs>
+						<filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+							<feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity="0.25" />
+						</filter>
+					</defs>
+					<g id="wheel" filter="url(#shadow)"></g>
+				</svg>
+				<div class="wheel-pointer" aria-hidden="true"></div>
+				<button id="spinBtn" class="spin-btn" aria-label="Spin the wheel">SPIN</button>
+			</div>
+		</section>
+		<section class="result-section">
+			<div id="resultCard" class="result-card hidden"></div>
+		</section>
+	</main>
+
+	<footer class="app-footer">
+		<div>Data via OpenStreetMap (Overpass API). Accuracy depends on community data.</div>
+	</footer>
+
+	<script src="./app.js"></script>
+</body>
+</html>
+
