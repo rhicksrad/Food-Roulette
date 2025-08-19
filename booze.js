@@ -6,7 +6,7 @@
 */
 
 const LAFAYETTE_CENTER = { lat: 40.4167, lon: -86.8753 };
-const RADIUS_METERS = 9000;
+const RADIUS_METERS = 12000; // ensure West Lafayette coverage as well
 const OVERPASS_URLS = [
 	"https://overpass-api.de/api/interpreter",
 	"https://overpass.kumi.systems/api/interpreter",
@@ -57,14 +57,17 @@ function toPlace(el) {
 function collectTypes(tags) {
 	const t = [];
 	const amenity = tags.amenity;
-	if (amenity === "bar" || amenity === "pub") t.push(amenity);
-	if (amenity === "restaurant" || amenity === "cafe") {
-		if (String(tags.alcohol || tags["serves:alcohol"] || "").toLowerCase() === "yes") {
-			t.push(amenity);
-		}
+	if (amenity === "bar" || amenity === "pub" || amenity === "biergarten" || amenity === "nightclub") t.push(amenity);
+	// Restaurants/cafes that indicate alcohol explicitly
+	const alcoholYes = String(tags.alcohol || tags["serves:alcohol"] || "").toLowerCase() === "yes";
+	const drinkYes = ["drink:beer","drink:wine","drink:spirits","drink:cocktails","drink:liquor"].some(k => String(tags[k] || "").toLowerCase() === "yes");
+	if ((amenity === "restaurant" || amenity === "cafe") && (alcoholYes || drinkYes)) {
+		t.push(amenity);
 	}
-	// Some places use craft_beer, brewery, microbrewery etc.
-	if (tags.brewery || tags.microbrewery || tags.craft_beer) t.push("brewery");
+	// Breweries / taprooms: craft=brewery, brewery=yes, microbrewery=yes, craft_beer=yes (loose)
+	if ((tags.craft && String(tags.craft).toLowerCase() === "brewery") || String(tags.brewery || tags.microbrewery || tags.craft_beer || "").toLowerCase() === "yes") {
+		t.push("brewery");
+	}
 	return Array.from(new Set(t));
 }
 
@@ -72,9 +75,37 @@ function buildQuery() {
 	return `[
 		out:json][timeout:25];
 	(
-		node["amenity"~"bar|pub|restaurant|cafe"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		way["amenity"~"bar|pub|restaurant|cafe"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
-		relation["amenity"~"bar|pub|restaurant|cafe"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		node["amenity"~"bar|pub|biergarten|nightclub"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		way["amenity"~"bar|pub|biergarten|nightclub"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		relation["amenity"~"bar|pub|biergarten|nightclub"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+
+		node["amenity"~"restaurant|cafe"]["alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		way["amenity"~"restaurant|cafe"]["alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		relation["amenity"~"restaurant|cafe"]["alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+
+		node["amenity"~"restaurant|cafe"]["serves:alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		way["amenity"~"restaurant|cafe"]["serves:alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		relation["amenity"~"restaurant|cafe"]["serves:alcohol"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+
+		node["amenity"~"restaurant|cafe"]["drink:beer"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		way["amenity"~"restaurant|cafe"]["drink:beer"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		relation["amenity"~"restaurant|cafe"]["drink:beer"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+
+		node["amenity"~"restaurant|cafe"]["drink:wine"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		way["amenity"~"restaurant|cafe"]["drink:wine"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		relation["amenity"~"restaurant|cafe"]["drink:wine"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+
+		node["amenity"~"restaurant|cafe"]["drink:spirits"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		way["amenity"~"restaurant|cafe"]["drink:spirits"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		relation["amenity"~"restaurant|cafe"]["drink:spirits"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+
+		node["amenity"~"restaurant|cafe"]["drink:cocktails"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		way["amenity"~"restaurant|cafe"]["drink:cocktails"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		relation["amenity"~"restaurant|cafe"]["drink:cocktails"="yes"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+
+		node["craft"="brewery"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		way["craft"="brewery"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
+		relation["craft"="brewery"](around:${RADIUS_METERS},${LAFAYETTE_CENTER.lat},${LAFAYETTE_CENTER.lon});
 	);
 	out center;`;
 }
