@@ -3,46 +3,34 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Food Roulette — Lafayette, IN</title>
+	<title>Booze Roulette — Lafayette, IN</title>
 	<link rel="preconnect" href="https://overpass-api.de" />
 	<link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
 	<header class="app-header">
-		<h1>Food Roulette — Lafayette, IN</h1>
+		<h1>Booze Roulette — Lafayette, IN</h1>
 		<div class="controls" style="margin-top:6px">
 			<div class="control-group">
-				<a href="./booze.html" class="dropdown-toggle" style="text-decoration:none">Go to Booze Roulette →</a>
+				<a href="./index.html" class="dropdown-toggle" style="text-decoration:none">← Back to Food Roulette</a>
 			</div>
 		</div>
 		<div class="controls">
 			<div class="control-group">
-				<label class="control-label">Exclude cuisines</label>
-				<div id="cuisineDropdown" class="dropdown">
-					<button id="cuisineToggle" class="dropdown-toggle" aria-expanded="false">Select cuisines to exclude</button>
-					<div id="cuisineMenu" class="dropdown-menu" aria-hidden="true">
+				<label class="control-label">Exclude types</label>
+				<div id="typeDropdown" class="dropdown">
+					<button id="typeToggle" class="dropdown-toggle" aria-expanded="false">Select types to exclude</button>
+					<div id="typeMenu" class="dropdown-menu" aria-hidden="true">
 						<div class="dropdown-search">
-							<input id="cuisineSearch" type="text" placeholder="Search cuisines..." />
+							<input id="typeSearch" type="text" placeholder="Search types..." />
 						</div>
-						<div id="cuisineOptions" class="dropdown-options"></div>
+						<div id="typeOptions" class="dropdown-options"></div>
 						<div class="dropdown-actions">
-							<button id="selectNone" class="secondary">Clear</button>
-							<button id="selectAll" class="secondary">Select all</button>
+							<button id="typeSelectNone" class="secondary">Clear</button>
+							<button id="typeSelectAll" class="secondary">Select all</button>
 						</div>
 					</div>
 				</div>
-			</div>
-			<div class="control-group tight">
-				<label class="control-checkbox">
-					<input type="checkbox" id="includeFastFood" checked />
-					<span>Include fast food</span>
-				</label>
-			</div>
-			<div class="control-group tight">
-				<label class="control-checkbox">
-					<input type="checkbox" id="includeCafe" checked />
-					<span>Include cafes</span>
-				</label>
 			</div>
 			<div class="control-group">
 				<button id="reloadBtn" title="Refetch from OpenStreetMap">Reload data</button>
@@ -52,11 +40,11 @@
 
 	<main class="app-main">
 		<section class="status-bar">
-			<div id="statusMessage">Loading restaurants from OpenStreetMap…</div>
+			<div id="statusMessage">Loading alcohol-serving venues from OpenStreetMap…</div>
 		</section>
 		<section class="wheel-section">
 			<div class="wheel-wrap">
-				<svg id="wheelSvg" viewBox="-550 -550 1100 1100" width="100%" height="100%" role="img" aria-label="Spinning wheel of restaurants">
+				<svg id="wheelSvg" viewBox="-550 -550 1100 1100" width="100%" height="100%" role="img" aria-label="Spinning wheel of alcohol venues">
 					<defs>
 						<filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
 							<feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity="0.25" />
@@ -77,7 +65,7 @@
 		<div>Data via OpenStreetMap (Overpass API). Accuracy depends on community data.</div>
 	</footer>
 
-	<script src="./app.js"></script>
+	<script src="./booze.js"></script>
 </body>
 </html>
 
